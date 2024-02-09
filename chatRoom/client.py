@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import socket
 import threading
 
@@ -9,15 +10,28 @@ def receive_messages(sock):
             print(f'{msg}')
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#client.connect(('7.tcp.eu.ngrok.io', 14024))#u ovom formatu treba ngrok
-client.connect(('localhost', 12345))#za hosta
 
-my_username = input('Enter username: ')
-client.send(my_username.encode('utf-8'))#šalje username
+sendMsg = False #inace bi mogo slat odmah poruke 
+isHost = input('are you host  y/n: ')
+if isHost =='y':
+    client.connect( ('localhost', 12345))#za hosta  
+    sendMsg = True
+else:
+    gottenAddress = input('input forwarded adress (adress:port): ')
+    addressPart, _, portPart = gottenAddress.partition(':')
+    addressPart = addressPart.strip()
+    portPart = portPart.strip()
+    client.connect((addressPart, int(portPart)))
+    sendMsg = True
+#client.connect(('7.tcp.eu.ngrok.io', 14024))#u ovom formatu treba ngrok
+
+if sendMsg == True:
+    my_username = input('Enter username: ')
+    client.send(my_username.encode('utf-8'))#šalje username
 
 receive_handler = threading.Thread(target=receive_messages, args=(client,))#threada da moze primat poruke dok pises i saljes svoje
 receive_handler.start()
 
-while True:
+while True and sendMsg == True:
     msg = input('')
     client.send(msg.encode('utf-8'))#šalje poruku
